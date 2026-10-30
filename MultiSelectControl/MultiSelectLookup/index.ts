@@ -40,30 +40,33 @@ export class MultiSelectLookup implements ComponentFramework.StandardControl<IIn
      * @param context The entire property bag available to control via Context Object; It contains values as set up by the customizer mapped to names defined in the manifest, as well as utility functions
      */
     public updateView(context: ComponentFramework.Context<IInputs>): void {
-        const gridParams = context.parameters.items;
+    const gridParams = context.parameters.items;
 
-        const lookupRecords: IEntityRef[] = [];
-        const records: Record<string, DataSetInterfaces.EntityRecord> = gridParams.records;
-        for (const key in records) {
-            const record: ExtendedEntityRecord = records[key] as ExtendedEntityRecord;
-            lookupRecords.push({
-                id: record._entityReference._id,
-                entityType: record._entityReference._etn,
-                name: record._entityReference._name
-            })
-        }
+    const lookupRecords: IEntityRef[] = [];
+    const records: Record<string, DataSetInterfaces.EntityRecord> = gridParams.records;
 
-        const props: ILookupProps = {
-            context: context,
-            lookUpRecords: lookupRecords
-        }
+    for (const key in records) {
+        const record: ExtendedEntityRecord = records[key] as ExtendedEntityRecord;
 
-        if (!this._root) {
-            this._root = createRoot(this._container);
-        }
-
-        this._root.render(React.createElement(Lookup, props))
+        lookupRecords.push({
+            id: record._entityReference._id,
+            entityType: record._entityReference._etn,
+            name: record._entityReference._name
+        });
     }
+
+    const props: ILookupProps = {
+        context: context,
+        lookUpRecords: lookupRecords,
+        lookupColumnName: context.parameters.lookupColumnName.raw?.trim() || ""
+    };
+
+    if (!this._root) {
+        this._root = createRoot(this._container);
+    }
+
+    this._root.render(React.createElement(Lookup, props));
+}
 
     /**
      * It is called by the framework prior to a control receiving new data.
