@@ -29,7 +29,13 @@
                   of-type="SingleLine.Text"
                   usage="input"
                   required="false" />
-        <!-- Property node's of-type attribute can be of-type-group attribute.
+        
+        <property name="lookupColumnName"
+                 display-name-key="Lookup Column Logical Name"
+                  description-key="Logical name of the Dataverse column to display instead of the primary name column"
+                 of-type="SingleLine.Text"
+                  usage="input"
+                  required="false" /><!-- Property node's of-type attribute can be of-type-group attribute.
       Example:
       <type-group name="numbers">
         <type>Whole.None</type>
