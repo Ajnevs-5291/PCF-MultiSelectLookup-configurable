@@ -4,7 +4,8 @@ import LookupOptions = ComponentFramework.UtilityApi.LookupOptions;
 
 export interface ILookupProps {
     context: ComponentFramework.Context<IInputs>;
-    lookUpRecords: IEntityRef[]
+    lookupColumnName?: string;
+    lookUpRecords: IEntityRef[];
 }
 
 interface targetType {
