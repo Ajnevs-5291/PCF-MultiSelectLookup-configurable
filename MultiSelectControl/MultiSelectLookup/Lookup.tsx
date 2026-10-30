@@ -14,10 +14,102 @@ export const Lookup = (props: ILookupProps) => {
 
 
     useEffect(() => {
-        setLookups(props.lookUpRecords);
-        const propsPaging = (props.context.parameters.items.paging as ExtendPaging);
+    let isCancelled = false;
+
+    const loadDisplayValues = async (): Promise<void> => {
+        const propsPaging =
+            props.context.parameters.items.paging as ExtendPaging;
+
         paging.current = propsPaging;
-    }, [props])
+
+        const lookupColumnName = props.lookupColumnName?.trim();
+
+        // Preserve the original primary-column display when no
+        // custom column has been configured.
+        if (!lookupColumnName) {
+            if (!isCancelled) {
+                setLookups(props.lookUpRecords);
+            }
+
+            return;
+        }
+
+        try {
+            const updatedLookups = await Promise.all(
+                props.lookUpRecords.map(
+                    async (lookup: IEntityRef): Promise<IEntityRef> => {
+                        try {
+                            const cleanId = lookup.id
+                                .replace("{", "")
+                                .replace("}", "");
+
+                            const record =
+                                await props.context.webAPI.retrieveRecord(
+                                    lookup.entityType,
+                                    cleanId,
+                                    `?$select=${lookupColumnName}`
+                                );
+
+                            const formattedValue =
+                                record[
+                                    `${lookupColumnName}@OData.Community.Display.V1.FormattedValue`
+                                ];
+
+                            const rawValue = record[lookupColumnName];
+
+                            const customDisplayValue =
+                                formattedValue ??
+                                rawValue;
+
+                            const hasCustomDisplayValue =
+                                customDisplayValue !== null &&
+                                customDisplayValue !== undefined &&
+                                String(customDisplayValue).trim() !== "";
+
+                            return {
+                                ...lookup,
+                                name: hasCustomDisplayValue
+                                    ? String(customDisplayValue)
+                                    : lookup.name
+                            };
+                        } catch (recordError: unknown) {
+                            console.error(
+                                `Could not retrieve column "${lookupColumnName}" for record ${lookup.id}:`,
+                                recordError
+                            );
+
+                            // Keep the primary name when retrieval fails.
+                            return lookup;
+                        }
+                    }
+                )
+            );
+
+            if (!isCancelled) {
+                setLookups(updatedLookups);
+            }
+        } catch (error: unknown) {
+            console.error(
+                `Could not load values from column "${lookupColumnName}":`,
+                error
+            );
+
+            if (!isCancelled) {
+                setLookups(props.lookUpRecords);
+            }
+        }
+    };
+
+    void loadDisplayValues();
+
+    return () => {
+        isCancelled = true;
+    };
+}, [
+    props.context,
+    props.lookUpRecords,
+    props.lookupColumnName
+]);
 
     const OpenLookupSearch = async (): Promise<void> => {
         const utils = props.context.utils as ExtendedUtils;
@@ -111,7 +203,7 @@ export const Lookup = (props: ILookupProps) => {
                 overflowY: 'auto',
                 padding: "4px",
                 paddingRight: "20px",
-                alignItems: "flex-starts",
+                alignItems: "flex-start",
                 boxSizing: 'border-box'
             }}>
                 {lookups.map((lookup: IEntityRef) => {
@@ -177,4 +269,4 @@ export const Lookup = (props: ILookupProps) => {
             </div>
         </div>
     );
-}
+};
